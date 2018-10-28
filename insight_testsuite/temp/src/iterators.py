@@ -109,7 +109,7 @@ class MultiFileCounter:
         '>': op.gt,
     }
 
-    def __init__(self, files, colname_list_dict=None):
+    def __init__(self, files, colname_dict=None):
         """
         A counter for entries in specified columns of csv files that can keep
         continuous count over multiple files, count only when a comparator is
@@ -122,7 +122,7 @@ class MultiFileCounter:
         Args:
             files (iterable[str]): paths to csv files to be read
 
-            colname_list_dict (dict[str, list]): universal column aliases as
+            colname_dict (dict[str, list]): universal column aliases as
                 keys and lists of possible column names as values. The aliases
                 provide a common interface for columns that may have different
                 names in different files. The column names should be included
@@ -134,10 +134,10 @@ class MultiFileCounter:
                     }
 
         Example Usage:
-            >>>colname_list_dict = {
+            >>>colname_dict = {
             >>>    'date': ['DATE', ]
             >>>}
-            >>>mfc = MultiFileCounter(my_files, my_colname_list_dict)
+            >>>mfc = MultiFileCounter(my_files, my_colname_dict)
             >>>mfc.add_constraint('date', op.gt, 20180601)
             >>>mfc.add_constraint('network', op.eq, 'comedy central')
             >>>mfc.add_counter('program')
@@ -154,7 +154,7 @@ class MultiFileCounter:
 
         """
         self.files = files
-        self.colname_list_dict = colname_list_dict
+        self.colname_dict= colname_dict
 
         self._counters = dict()
         self._constraints = list()
@@ -194,7 +194,7 @@ class MultiFileCounter:
 
         These are the columns that will be parsed from the csv, and are the
         combined set of all counter and constraint columns. The object must be
-        initialized with a colname_list_dict if the strings passed to the
+        initialized with a colname_dict if the strings passed to the
         add_constraint and add_counter do not correspond to a single column
         which is present in all of the csvs specified by the 'files' parameter
         """
@@ -203,18 +203,6 @@ class MultiFileCounter:
             constraint_aliases = [con.alias for con in self.constraints]
             alias_set.update(constraint_aliases)
         return alias_set
-
-    def add_alias(self, alias, colname):
-        """
-        Add a new alias for a column name. Modifies self.colname_list_dict.
-
-        Example Usage:
-            >>>mfc.add_alias('population', 'TOT_POP')
-        """
-        if alias in self.colname_list_dict:
-            self.colname_list_dict[alias].append(colname)
-        else:
-            self.colname_dict.update({alias: [colname]})
 
     @property
     def constraints(self):
@@ -306,10 +294,10 @@ class MultiFileCounter:
             reader = csv.reader(f, delimiter=';')
             header = next(reader)
 
-        if self.colname_list_dict:
+        if self.colname_dict:
             alias_dict = dict()
             for alias in self.aliases:
-                colname_list = self.colname_list_dict[alias]
+                colname_list = self.colname_dict[alias]
                 colname = next(col for col in header if col in colname_list)
                 alias_dict.update({colname: alias})
         else:

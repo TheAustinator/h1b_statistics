@@ -26,11 +26,6 @@ def main():
     header_2 = ('TOP_STATES', 'NUMBER_CERTIFIED_APPLICATIONS', 'PERCENTAGE')
 
     # possible column name aliases
-    # note: this step could also be done dynamically after MultiFileCounter
-    #       initialization with:
-    #   mfc.add_alias('status', 'STATUS')
-    #   mfc.add_alias('status', 'CASE_STATUS')
-    #   ...
     colname_dict = {
         'status': ['STATUS', 'CASE_STATUS'],
         'occupation': ['SOC_NAME', 'LCA_CASE_SOC_NAME'],
