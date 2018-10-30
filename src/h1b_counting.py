@@ -1,12 +1,17 @@
 from argparse import ArgumentParser
 import os
+import sys
 
 from iterators import MultiFileCounter
 
 
 def main():
     """
-    Reads all H1B csv files from input directory and generates two ouput files:
+    Reads files(s) specified by first argument. If first argument is a
+    directory, all files in the directory will be read and iterated over by
+    a MultiFileCounter, and if it is a single csv file, just that file will be
+    parsed.
+    The second two command line arguments are the names of the output files:
     top_10_occupations.txt and top_10_states.txt. It uses the MultiFileCounter
     to iterate through all of the files sequentially, reading and cleaning
     relevant entries with the CleanReader, and counting the entries for
@@ -15,22 +20,15 @@ def main():
     occupations and states with the highest counts are output into their
     respective text files with the item, count, and percentage of total.
     """
-    parser = ArgumentParser(
-        description='h1b csv entry counting',
-        prog='python h1b_counting.py <args>',
-    )
-    parser.add_argument('input_dir', required=True)
-    parser.add_argument('occupations_output_path', required=True)
-    parser.add_argument('states_output_path', required=True)
 
-    # Parse inputs to get input data path and output dictionary path
-    args = vars(parser.parse_args())
+    input_ = str(sys.argv[1])
+    if input_.endswith('.csv'):
+        input_files = [input_]
+    else:
+        input_files = [os.path.join(input_, file) for file in os.listdir(input_)]
 
-    input_dir = args['input']
-    input_files = [os.path.join(input_dir, file) for file in os.listdir(input_dir)]
-
-    output_filepath_1 = args['occupations_output_path']
-    output_filepath_2 = args['states_output_path']
+    output_filepath_1 = str(sys.argv[2])
+    output_filepath_2 = str(sys.argv[3])
     header_1 = ('TOP_OCCUPATIONS', 'NUMBER_CERTIFIED_APPLICATIONS', 'PERCENTAGE')
     header_2 = ('TOP_STATES', 'NUMBER_CERTIFIED_APPLICATIONS', 'PERCENTAGE')
 
@@ -53,7 +51,6 @@ def main():
     mfc.count()
     counter_1 = mfc.counters['occupation']
     counter_2 = mfc.counters['state']
-
     write_output_file(output_filepath_1, header_1, counter_1, 10, ';')
     write_output_file(output_filepath_2, header_2, counter_2, 10, ';')
 
@@ -69,13 +66,13 @@ def write_output_file(filepath, header, counter, n, delimiter):
         n (int): top n entries of counter to use in text
         delimiter (str): delimiter for text file
     """
-    header_text = ';'.join(header)
+    header_text = ';'.join(header) + '\n'
     body_text = gen_counter_text(counter, n, delimiter)
 
     with open(filepath, 'w') as f:
         f.write(header_text)
-        for entry in body_text:
-            f.write(entry)
+        for row in body_text:
+            f.write(row)
 
 
 def gen_counter_text(counter, n, delimiter):
@@ -93,15 +90,15 @@ def gen_counter_text(counter, n, delimiter):
     Example Usage:
         >>>text_gen = gen_counter_text(my_counter, 10, ',')
         >>>next(text_gen)
-        '\nitaly,652,32.0%'
+        'italy,652,32.0%\n'
     """
-    n_tot = sum(counter.values())
-    top_n = counter.most_common(n)
+    unsorted_top_n = counter.most_common(n)
+    top_n = sorted(unsorted_top_n, key=lambda x: (-x[1], x[0]))
     names = [tup[0].upper() for tup in top_n]
     counts = [str(tup[1]) for tup in top_n]
     percentage = [counter.percent_str(name) for name in names]
     data = zip(names, counts, percentage)
-    text_gen = ('\n' + delimiter.join(entry for entry in row) for row in data)
+    text_gen = (delimiter.join(entry for entry in row) + '\n' for row in data)
     return text_gen
 
 

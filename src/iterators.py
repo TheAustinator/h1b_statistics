@@ -1,10 +1,12 @@
 from collections import Counter, namedtuple
 import csv
+from datetime import datetime
+from dateutil import parser
 import operator as op
 
 
 class CleanReader:
-    def __init__(self, file_path, cols, alias_dict=None):
+    def __init__(self, file_path, cols, alias_dict=None, preprocessing='strict'):
         """
         Iterable csv reader wrapper that cleans entries in columns of interest
         the cleaned entries in a namedtuple. The namedtuple is named either by
@@ -49,11 +51,15 @@ class CleanReader:
             self.aliases = [alias_dict[col] for col in self.cols]
         else:
             self.aliases = cols
+        self.preprocessing = preprocessing
 
     def __iter__(self):
 
         self._len = 0
-        RowTup = namedtuple('RowTup', self.aliases)
+        try:
+            RowTup = namedtuple('RowTup', self.aliases)
+        except:
+            import ipdb;ipdb.set_trace()
         with open(self.file_path, 'rU') as f:
             self.reader = csv.DictReader(f, delimiter=';')
             for row in self.reader:
@@ -63,8 +69,7 @@ class CleanReader:
                 row_tup = RowTup(*row_data)
                 yield row_tup
 
-    @staticmethod
-    def preprocess_text(entry, errors='strict'):
+    def preprocess_text(self, entry):
         """
         Precprocess the text of a single entry in a row of a csv.
         It is encoded and decoded to ensure integrity, and by default, an
@@ -79,7 +84,7 @@ class CleanReader:
         Returns:
             entry: preprocessed entry
         """
-        entry = entry.encode('ascii', errors=errors).decode()
+        entry = entry.encode('ascii', errors=self.preprocessing).decode()
         entry = entry.strip()
         entry = entry.lower()
         return entry
@@ -96,7 +101,7 @@ class ExtendedCounter(Counter):
 
     def percent_str(self, item):
         item = item.lower()
-        return f'{(100 * self.fraction(item)):.1f}'
+        return f'{(100 * self.fraction(item)):.1f}%'
 
 
 class MultiFileCounter:
@@ -129,8 +134,8 @@ class MultiFileCounter:
                 in the key.
                 ex:
                     {
-                        'population': ['POP_METRO', 'POPULATION', 'POP_TOT']
-                        'income avg': ['HOUSEHOLD_INC', 'AVG_INCOME', 'SALARY_AVG']
+                        'population': ['POP_METRO', 'POPULATION', 'POP_TOT'],
+                        'income avg': ['HOUSEHOLD_INC', 'AVG_INCOME', 'SALARY_AVG'],
                     }
 
         Example Usage:
@@ -169,7 +174,7 @@ class MultiFileCounter:
             clean_reader = CleanReader(file, colnames, alias_dict)
             for row_tup in clean_reader:
 
-                # update counters if all conditions are met
+                # update counters if all constraints are satisfied
                 if self.constraints_satisfied(row_tup):
                     for alias in self.counters:
                         self._counters[alias][getattr(row_tup, alias)] += 1
@@ -198,11 +203,7 @@ class MultiFileCounter:
         add_constraint and add_counter do not correspond to a single column
         which is present in all of the csvs specified by the 'files' parameter
         """
-        alias_set = set(self.counters)
-        if self.constraints:
-            constraint_aliases = [con.alias for con in self.constraints]
-            alias_set.update(constraint_aliases)
-        return alias_set
+        return self.colname_list_dict.keys()
 
     def add_alias(self, alias, colname):
         """
@@ -211,10 +212,13 @@ class MultiFileCounter:
         Example Usage:
             >>>mfc.add_alias('population', 'TOT_POP')
         """
+        if not self.colname_list_dict:
+            self.colname_list_dict = dict()
+
         if alias in self.colname_list_dict:
             self.colname_list_dict[alias].append(colname)
         else:
-            self.colname_dict.update({alias: [colname]})
+            self.colname_list_dict.update({alias: [colname]})
 
     @property
     def constraints(self):
@@ -262,7 +266,16 @@ class MultiFileCounter:
         if not self.constraints:
             return True
         else:
-            bools = (con.cmp(getattr(row, con.alias), con.val) for con in self.constraints)
+            bools = []
+            for con in self.constraints:
+                entry = getattr(row, con.alias)
+                # convert row entry to numeric if val is numeric
+                if isinstance(con.val, float) or isinstance(entry, int):
+                    entry = float(entry)
+                elif isinstance(con.val, datetime):
+                    entry = parser.parse(entry)
+                bool_ = con.cmp(entry, con.val)
+                bools.append(bool_)
             return all(bools)
 
     @property
