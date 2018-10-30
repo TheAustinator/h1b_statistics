@@ -83,7 +83,7 @@ class TestMultiFileCounter(TestCase):
             counter_2 = self.mfc.counters['job_title']
         except Exception as e:
             raise AssertionError(
-                f'Cannot extract counters from mfc by alias {e.args}'
+                'Cannot extract counters from mfc by alias {0}'.format(e.args)
             )
 
 

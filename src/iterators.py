@@ -101,7 +101,7 @@ class ExtendedCounter(Counter):
 
     def percent_str(self, item):
         item = item.lower()
-        return f'{(100 * self.fraction(item)):.1f}%'
+        return '{0:.1f}%'.format((100 * self.fraction(item)))
 
 
 class MultiFileCounter:
