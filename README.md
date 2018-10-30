@@ -40,7 +40,9 @@ A `MultiFileCounter` is instantiated with aliases for 'status', 'occupation', an
 
 **General Use**
 1. Download the repository  
-`$git clone https://github.com/TheAustinator/h1b_statistics.git`  
+```
+$git clone https://github.com/TheAustinator/h1b_statistics.git
+```
 2. Import the `MultiFileCounter`  
 3. Instantiate the `MultiFileCounter` with desired filepaths and aliases  
 ```
@@ -60,7 +62,9 @@ mfc.add_alias('religion', 'RELIGION')
 mfc.add_counter('religion')
 ```
 5. Run counter  
-`mfc.count()`  
+```
+mfc.count()
+```
 6. Extract counters  
 ```
 counter_region = mfc.counters['region']  
