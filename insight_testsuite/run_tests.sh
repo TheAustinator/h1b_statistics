@@ -109,8 +109,5 @@ function run_all_tests {
   echo "[$(date)] ${PASS_CNT} of ${NUM_TESTS} tests passed" >> ${GRADER_ROOT}/results.txt
 }
 
-
-python3 ./test_2/functional_tests.py
-
 check_project_struct
 run_all_tests

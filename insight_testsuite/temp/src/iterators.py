@@ -56,7 +56,10 @@ class CleanReader:
     def __iter__(self):
 
         self._len = 0
-        RowTup = namedtuple('RowTup', self.aliases)
+        try:
+            RowTup = namedtuple('RowTup', self.aliases)
+        except:
+            import ipdb;ipdb.set_trace()
         with open(self.file_path, 'rU') as f:
             self.reader = csv.DictReader(f, delimiter=';')
             for row in self.reader:
@@ -98,7 +101,7 @@ class ExtendedCounter(Counter):
 
     def percent_str(self, item):
         item = item.lower()
-        return f'{(100 * self.fraction(item)):.1f}'
+        return f'{(100 * self.fraction(item)):.1f}%'
 
 
 class MultiFileCounter:
@@ -200,11 +203,7 @@ class MultiFileCounter:
         add_constraint and add_counter do not correspond to a single column
         which is present in all of the csvs specified by the 'files' parameter
         """
-        alias_set = set(self.counters)
-        if self.constraints:
-            constraint_aliases = [con.alias for con in self.constraints]
-            alias_set.update(constraint_aliases)
-        return alias_set
+        return self.colname_list_dict.keys()
 
     def add_alias(self, alias, colname):
         """
@@ -213,10 +212,13 @@ class MultiFileCounter:
         Example Usage:
             >>>mfc.add_alias('population', 'TOT_POP')
         """
+        if not self.colname_list_dict:
+            self.colname_list_dict = dict()
+
         if alias in self.colname_list_dict:
             self.colname_list_dict[alias].append(colname)
         else:
-            self.colname_dict.update({alias: [colname]})
+            self.colname_list_dict.update({alias: [colname]})
 
     @property
     def constraints(self):

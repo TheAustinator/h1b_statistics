@@ -17,7 +17,6 @@ def run_tests():
     test_mfc = TestMultiFileCounter()
     test_mfc.setUp()
     test_mfc.test_aliases()
-    test_mfc.tearDown()
 
 
 def test_output_size():
