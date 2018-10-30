@@ -1,10 +1,12 @@
 from collections import Counter, namedtuple
 import csv
+from datetime import datetime
+from dateutil import parser
 import operator as op
 
 
 class CleanReader:
-    def __init__(self, file_path, cols, alias_dict=None):
+    def __init__(self, file_path, cols, alias_dict=None, preprocessing='strict'):
         """
         Iterable csv reader wrapper that cleans entries in columns of interest
         the cleaned entries in a namedtuple. The namedtuple is named either by
@@ -49,6 +51,7 @@ class CleanReader:
             self.aliases = [alias_dict[col] for col in self.cols]
         else:
             self.aliases = cols
+        self.preprocessing = preprocessing
 
     def __iter__(self):
 
@@ -63,8 +66,7 @@ class CleanReader:
                 row_tup = RowTup(*row_data)
                 yield row_tup
 
-    @staticmethod
-    def preprocess_text(entry, errors='strict'):
+    def preprocess_text(self, entry):
         """
         Precprocess the text of a single entry in a row of a csv.
         It is encoded and decoded to ensure integrity, and by default, an
@@ -79,7 +81,7 @@ class CleanReader:
         Returns:
             entry: preprocessed entry
         """
-        entry = entry.encode('ascii', errors=errors).decode()
+        entry = entry.encode('ascii', errors=self.preprocessing).decode()
         entry = entry.strip()
         entry = entry.lower()
         return entry
@@ -109,7 +111,7 @@ class MultiFileCounter:
         '>': op.gt,
     }
 
-    def __init__(self, files, colname_dict=None):
+    def __init__(self, files, colname_list_dict=None):
         """
         A counter for entries in specified columns of csv files that can keep
         continuous count over multiple files, count only when a comparator is
@@ -122,22 +124,22 @@ class MultiFileCounter:
         Args:
             files (iterable[str]): paths to csv files to be read
 
-            colname_dict (dict[str, list]): universal column aliases as
+            colname_list_dict (dict[str, list]): universal column aliases as
                 keys and lists of possible column names as values. The aliases
                 provide a common interface for columns that may have different
                 names in different files. The column names should be included
                 in the key.
                 ex:
                     {
-                        'population': ['POP_METRO', 'POPULATION', 'POP_TOT']
-                        'income avg': ['HOUSEHOLD_INC', 'AVG_INCOME', 'SALARY_AVG']
+                        'population': ['POP_METRO', 'POPULATION', 'POP_TOT'],
+                        'income avg': ['HOUSEHOLD_INC', 'AVG_INCOME', 'SALARY_AVG'],
                     }
 
         Example Usage:
-            >>>colname_dict = {
+            >>>colname_list_dict = {
             >>>    'date': ['DATE', ]
             >>>}
-            >>>mfc = MultiFileCounter(my_files, my_colname_dict)
+            >>>mfc = MultiFileCounter(my_files, my_colname_list_dict)
             >>>mfc.add_constraint('date', op.gt, 20180601)
             >>>mfc.add_constraint('network', op.eq, 'comedy central')
             >>>mfc.add_counter('program')
@@ -154,7 +156,7 @@ class MultiFileCounter:
 
         """
         self.files = files
-        self.colname_dict= colname_dict
+        self.colname_list_dict = colname_list_dict
 
         self._counters = dict()
         self._constraints = list()
@@ -169,7 +171,7 @@ class MultiFileCounter:
             clean_reader = CleanReader(file, colnames, alias_dict)
             for row_tup in clean_reader:
 
-                # update counters if all conditions are met
+                # update counters if all constraints are satisfied
                 if self.constraints_satisfied(row_tup):
                     for alias in self.counters:
                         self._counters[alias][getattr(row_tup, alias)] += 1
@@ -194,7 +196,7 @@ class MultiFileCounter:
 
         These are the columns that will be parsed from the csv, and are the
         combined set of all counter and constraint columns. The object must be
-        initialized with a colname_dict if the strings passed to the
+        initialized with a colname_list_dict if the strings passed to the
         add_constraint and add_counter do not correspond to a single column
         which is present in all of the csvs specified by the 'files' parameter
         """
@@ -203,6 +205,18 @@ class MultiFileCounter:
             constraint_aliases = [con.alias for con in self.constraints]
             alias_set.update(constraint_aliases)
         return alias_set
+
+    def add_alias(self, alias, colname):
+        """
+        Add a new alias for a column name. Modifies self.colname_list_dict.
+
+        Example Usage:
+            >>>mfc.add_alias('population', 'TOT_POP')
+        """
+        if alias in self.colname_list_dict:
+            self.colname_list_dict[alias].append(colname)
+        else:
+            self.colname_dict.update({alias: [colname]})
 
     @property
     def constraints(self):
@@ -250,7 +264,16 @@ class MultiFileCounter:
         if not self.constraints:
             return True
         else:
-            bools = (con.cmp(getattr(row, con.alias), con.val) for con in self.constraints)
+            bools = []
+            for con in self.constraints:
+                entry = getattr(row, con.alias)
+                # convert row entry to numeric if val is numeric
+                if isinstance(con.val, float) or isinstance(entry, int):
+                    entry = float(entry)
+                elif isinstance(con.val, datetime):
+                    entry = parser.parse(entry)
+                bool_ = con.cmp(entry, con.val)
+                bools.append(bool_)
             return all(bools)
 
     @property
@@ -294,10 +317,10 @@ class MultiFileCounter:
             reader = csv.reader(f, delimiter=';')
             header = next(reader)
 
-        if self.colname_dict:
+        if self.colname_list_dict:
             alias_dict = dict()
             for alias in self.aliases:
-                colname_list = self.colname_dict[alias]
+                colname_list = self.colname_list_dict[alias]
                 colname = next(col for col in header if col in colname_list)
                 alias_dict.update({colname: alias})
         else:

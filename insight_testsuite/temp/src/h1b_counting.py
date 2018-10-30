@@ -1,3 +1,4 @@
+from argparse import ArgumentParser
 import os
 
 from iterators import MultiFileCounter
@@ -5,7 +6,11 @@ from iterators import MultiFileCounter
 
 def main():
     """
-    Reads all H1B csv files from input directory and generates two ouput files:
+    Reads files(s) specified by first argument. If first argument is a
+    directory, all files in the directory will be read and iterated over by
+    a MultiFileCounter, and if it is a single csv file, just that file will be
+    parsed.
+    The second two command line arguments are the names of the output files:
     top_10_occupations.txt and top_10_states.txt. It uses the MultiFileCounter
     to iterate through all of the files sequentially, reading and cleaning
     relevant entries with the CleanReader, and counting the entries for
@@ -14,10 +19,10 @@ def main():
     occupations and states with the highest counts are output into their
     respective text files with the item, count, and percentage of total.
     """
-    input_dir = os.path.join(os.path.dirname(__file__), '../input')
+    input_dir = './input'
     input_files = [os.path.join(input_dir, file) for file in os.listdir(input_dir)]
 
-    output_dir = os.path.join(os.path.dirname(__file__), '../output')
+    output_dir = './output'
     output_filename_1 = 'top_10_occupations.txt'
     output_filename_2 = 'top_10_states.txt'
     output_filepath_1 = os.path.join(output_dir, output_filename_1)
@@ -26,6 +31,11 @@ def main():
     header_2 = ('TOP_STATES', 'NUMBER_CERTIFIED_APPLICATIONS', 'PERCENTAGE')
 
     # possible column name aliases
+    # note: this step could also be done dynamically after MultiFileCounter
+    #       initialization with:
+    #   mfc.add_alias('status', 'STATUS')
+    #   mfc.add_alias('status', 'CASE_STATUS')
+    #   ...
     colname_dict = {
         'status': ['STATUS', 'CASE_STATUS'],
         'occupation': ['SOC_NAME', 'LCA_CASE_SOC_NAME'],

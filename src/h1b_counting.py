@@ -1,3 +1,4 @@
+from argparse import ArgumentParser
 import os
 
 from iterators import MultiFileCounter
@@ -14,14 +15,22 @@ def main():
     occupations and states with the highest counts are output into their
     respective text files with the item, count, and percentage of total.
     """
-    input_dir = os.path.join(os.path.dirname(__file__), '../input')
+    parser = ArgumentParser(
+        description='h1b csv entry counting',
+        prog='python h1b_counting.py <args>',
+    )
+    parser.add_argument('input_dir', required=True)
+    parser.add_argument('occupations_output_path', required=True)
+    parser.add_argument('states_output_path', required=True)
+
+    # Parse inputs to get input data path and output dictionary path
+    args = vars(parser.parse_args())
+
+    input_dir = args['input']
     input_files = [os.path.join(input_dir, file) for file in os.listdir(input_dir)]
 
-    output_dir = os.path.join(os.path.dirname(__file__), '../output')
-    output_filename_1 = 'top_10_occupations.txt'
-    output_filename_2 = 'top_10_states.txt'
-    output_filepath_1 = os.path.join(output_dir, output_filename_1)
-    output_filepath_2 = os.path.join(output_dir, output_filename_2)
+    output_filepath_1 = args['occupations_output_path']
+    output_filepath_2 = args['states_output_path']
     header_1 = ('TOP_OCCUPATIONS', 'NUMBER_CERTIFIED_APPLICATIONS', 'PERCENTAGE')
     header_2 = ('TOP_STATES', 'NUMBER_CERTIFIED_APPLICATIONS', 'PERCENTAGE')
 
