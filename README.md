@@ -43,14 +43,17 @@ A `MultiFileCounter` is instantiated with aliases for 'status', 'occupation', an
 `$git clone https://github.com/TheAustinator/h1b_statistics.git`  
 2. Import the `MultiFileCounter`  
 3. Instantiate the `MultiFileCounter` with desired filepaths and aliases  
-`files = ['dir/file_1.csv', 'dir/file_2.csv', 'dir/file_3.csv']  
+```
+files = ['dir/file_1.csv', 'dir/file_2.csv', 'dir/file_3.csv']</
 colname_dict = {  
       'population': ['POP_METRO', 'POPULATION', 'POP_TOT'],  
       'region': ['REGION', 'RGN'],  
 }  
-mfc = MultiFileCounter(files, colname_dict)`  
+mfc = MultiFileCounter(files, colname_dict)
+```
 4. Add counters and constraints, and dynamically add additional aliases as needed  
-`mfc.add_constraint('population', '>', 50000)  
+```
+mfc.add_constraint('population', '>', 50000)  
 mfc.add_counter('region')  
 mfc.add_alias('religion', 'MAJ_RELIGION')  
 mfc.add_alias('religion', 'RELIGION')  
@@ -62,7 +65,8 @@ mfc.add_counter('religion')`
 counter_religion = mfc.counters['religion']`  
 7. Use counters as desired, or use the `write_output_file` function to generate a text file of the top entries with the counts and percentages of total for each counter  
 `header = ('religion', 'disciples', 'percentage')  
-write_output_file('top_5_religions.txt', header, counter_religion, 5, ',')`  
+write_output_file('top_5_religions.txt', header, counter_religion, 5, ',')
+```
 
 # Input Dataset
 
