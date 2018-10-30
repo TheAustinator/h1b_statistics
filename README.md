@@ -33,36 +33,36 @@ A `MultiFileCounter` is instantiated with aliases for 'status', 'occupation', an
 # Run Instructions
 
 **H1B Statistics**
-1. Download the repository
-`$git clone https://github.com/TheAustinator/h1b_statistics.git`
-2. Run the `run.sh` bash script
-`bash .h1b_statistics/run.sh`
+1. Download the repository  
+`$git clone https://github.com/TheAustinator/h1b_statistics.git`  
+2. Run the `run.sh` bash script  
+`bash .h1b_statistics/run.sh`  
 
 **General Use**
-1. Download the repository
-`$git clone https://github.com/TheAustinator/h1b_statistics.git`
-2. Import the `MultiFileCounter`
-3. Instantiate the `MultiFileCounter` with desired filepaths and aliases
-`files = ['dir/file_1.csv', 'dir/file_2.csv', 'dir/file_3.csv']
-colname_dict = {
-      'population': ['POP_METRO', 'POPULATION', 'POP_TOT'],
-      'region': ['REGION', 'RGN'],
-}
-mfc = MultiFileCounter(files, colname_dict)`
-4. Add counters and constraints, and dynamically add additional aliases as needed
-`mfc.add_constraint('population', '>', 50000)
-mfc.add_counter('region')
-mfc.add_alias('religion', 'MAJ_RELIGION')
-mfc.add_alias('religion', 'RELIGION')
-mfc.add_counter('religion')`
-5. Run counter
-`mfc.count()`
-6. Extract counters
-`counter_region = mfc.counters['region']
-counter_religion = mfc.counters['religion']`
-7. Use counters as desired, or use the `write_output_file` function to generate a text file of the top entries with the counts and percentages of total for each counter
-`header = ('religion', 'disciples', 'percentage')
-write_output_file('top_5_religions.txt', header, counter_religion, 5, ',')`
+1. Download the repository  
+`$git clone https://github.com/TheAustinator/h1b_statistics.git`  
+2. Import the `MultiFileCounter`  
+3. Instantiate the `MultiFileCounter` with desired filepaths and aliases  
+`files = ['dir/file_1.csv', 'dir/file_2.csv', 'dir/file_3.csv']  
+colname_dict = {  
+      'population': ['POP_METRO', 'POPULATION', 'POP_TOT'],  
+      'region': ['REGION', 'RGN'],  
+}  
+mfc = MultiFileCounter(files, colname_dict)`  
+4. Add counters and constraints, and dynamically add additional aliases as needed  
+`mfc.add_constraint('population', '>', 50000)  
+mfc.add_counter('region')  
+mfc.add_alias('religion', 'MAJ_RELIGION')  
+mfc.add_alias('religion', 'RELIGION')  
+mfc.add_counter('religion')`  
+5. Run counter  
+`mfc.count()`  
+6. Extract counters  
+`counter_region = mfc.counters['region']  
+counter_religion = mfc.counters['religion']`  
+7. Use counters as desired, or use the `write_output_file` function to generate a text file of the top entries with the counts and percentages of total for each counter  
+`header = ('religion', 'disciples', 'percentage')  
+write_output_file('top_5_religions.txt', header, counter_religion, 5, ',')`  
 
 # Input Dataset
 
