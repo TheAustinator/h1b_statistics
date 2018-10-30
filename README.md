@@ -57,14 +57,18 @@ mfc.add_constraint('population', '>', 50000)
 mfc.add_counter('region')  
 mfc.add_alias('religion', 'MAJ_RELIGION')  
 mfc.add_alias('religion', 'RELIGION')  
-mfc.add_counter('religion')`  
+mfc.add_counter('religion')
+```
 5. Run counter  
 `mfc.count()`  
 6. Extract counters  
-`counter_region = mfc.counters['region']  
-counter_religion = mfc.counters['religion']`  
+```
+counter_region = mfc.counters['region']  
+counter_religion = mfc.counters['religion']
+```
 7. Use counters as desired, or use the `write_output_file` function to generate a text file of the top entries with the counts and percentages of total for each counter  
-`header = ('religion', 'disciples', 'percentage')  
+```
+header = ('religion', 'disciples', 'percentage')  
 write_output_file('top_5_religions.txt', header, counter_religion, 5, ',')
 ```
 
